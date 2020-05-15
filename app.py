@@ -490,9 +490,39 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  try:
+    name = request.form.get('name')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    phone = request.form.get('phone')
+    image_link = request.form.get('image_link')
+    website = request.form.get('website')
+    facebook_link = request.form.get('facebook_link')
+    
+    new_artist = Artist(
+      name=name,
+      city=city,
+      state=state,
+      phone=phone,
+      image_link=image_link,
+      website=website,
+      facebook_link=facebook_link
+    )
 
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    genres = request.form.getlist('genres')
+    for genre in genres:
+      genre_record = Genre.query.filter_by(name=genre).first()
+      new_artist.genres.append(genre_record)
+    
+    db.session.add(new_artist)
+    db.session.commit()
+    flash(f'Artist {name} was successfully listed!')
+  except:
+    db.session.rollback()
+    flash(f'Artist {name} could not be listed.')
+    print(sys.exc_info())
+  finally:
+    db.session.close()
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
   return render_template('pages/home.html')
