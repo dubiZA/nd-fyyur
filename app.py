@@ -14,6 +14,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 import sys
+import datetime
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -132,29 +133,43 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  # Initialize collection data types and current time
+  data = []
+  cities_states = []
+  current_date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+  # Retrieve unique city/state combos from venue table
+  unique_cities = db.session.query(Venue.city, Venue.state).distinct()
+
+  # Add the city/state combps to a list for use next
+  for city, state in unique_cities:
+    cities = {}
+    cities['city'] = city
+    cities['state'] = state
+    cities_states.append(cities)
+
+  # Start building out the data structure expected by the view starting
+  # with venue location information. Append this and the next for loops
+  # results in to the "data" list
+  for location in cities_states:
+    venues_list = []
+    venues_cities = Venue.query.filter_by(city=location['city']).all()
+
+    # Build out the next part of the expected data structure with
+    # getting venue details
+    for venue_detail in venues_cities:
+      venue = {}
+      venue['id'] = venue_detail.id
+      venue['name'] = venue_detail.name
+      venue['num_upcoming_shows'] = db.session.query(Show).filter(
+                                    Show.venue_id==venue['id'],
+                                    Show.start_time>=current_date_time).\
+                                      count()
+      venues_list.append(venue)
+      location['venues'] = venues_list
+    
+    data.append(location)
+
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
