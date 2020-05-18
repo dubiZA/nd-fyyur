@@ -221,8 +221,8 @@ class ArtistForm(Form):
             ('Other', 'Other'),
         ]
     )
-    seeking_talent = BooleanField(
-        'seeking_talent'
+    seeking_venue = BooleanField(
+        'seeking_venue'
     )
     seeking_description = StringField(
         'seeking_description', validators=[Optional()]

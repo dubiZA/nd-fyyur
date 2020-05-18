@@ -287,16 +287,25 @@ def create_venue_submission():
     state = request.form.get('state')
     address = request.form.get('address')
     phone = request.form.get('phone')
+    seeking_talent = request.form.get('seeking_talent')
+    seeking_description = request.form.get('seeking_description')
     image_link = request.form.get('image_link')
     website = request.form.get('website')
     facebook_link = request.form.get('facebook_link')
     
+    if seeking_talent == 'y':
+      seeking_talent = True
+    elif seeking_talent == 'n':
+      seeking_talent = False
+
     new_venue = Venue(
       name=name,
       city=city,
       state=state,
       address=address,
       phone=phone,
+      seeking_talent=seeking_talent,
+      seeking_description=seeking_description,
       image_link=image_link,
       website=website,
       facebook_link=facebook_link
@@ -333,6 +342,10 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
+  
+  all_artists = Artist.query.all()
+  print(all_artists)
+  
   data=[{
     "id": 4,
     "name": "Guns N Petals",
@@ -507,15 +520,24 @@ def create_artist_submission():
     city = request.form.get('city')
     state = request.form.get('state')
     phone = request.form.get('phone')
+    seeking_venue = request.form.get('seeking_venue')
+    seeking_description = request.form.get('seeking_description')
     image_link = request.form.get('image_link')
     website = request.form.get('website')
     facebook_link = request.form.get('facebook_link')
     
+    if seeking_venue == 'y':
+      seeking_venue = True
+    elif seeking_venue == 'n':
+      seeking_venue = False
+
     new_artist = Artist(
       name=name,
       city=city,
       state=state,
       phone=phone,
+      seeking_venue=seeking_venue,
+      seeking_description=seeking_description,
       image_link=image_link,
       website=website,
       facebook_link=facebook_link
