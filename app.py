@@ -163,8 +163,8 @@ def venues():
       venue['name'] = venue_detail.name
       venue['num_upcoming_shows'] = db.session.query(Show).filter(
                                     Show.venue_id==venue['id'],
-                                    Show.start_time>=current_date_time).\
-                                      count()
+                                    Show.start_time>=current_date_time
+                                    ).count()
       venues_list.append(venue)
       location['venues'] = venues_list
     
@@ -174,17 +174,35 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+  # Get search term and use filter with ilike for case insensitive searching
+  # Also get current time and number of query objects from search
+  search_term = request.form.get('search_term')
+  search_results = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
+  current_date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  count_of_results = len(search_results)
+  
+  # Initialize the data list and step through each result to retrieve needed data
+  data = []
+  for venue in search_results:
+    venue_id = venue.id
+    venue_name = venue.name
+    upcoming_show_count = db.session.query(Show).filter(
+                                    Show.venue_id==venue_id,
+                                    Show.start_time>=current_date_time
+                                    ).count()
+    venue_details = {
+      'id': venue_id,
+      'name': venue_name,
+      'num_upcoming_shows': upcoming_show_count
+    }
+    data.append(venue_details)
+  
+  # Build the response dictionary the view is expecting
+  response = {
+    'count': count_of_results,
+    'data': data
   }
+
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
