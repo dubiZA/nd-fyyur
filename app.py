@@ -376,17 +376,35 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+  # Get search term and use filter with ilike for case insensitive searching
+  # Also get current time and number of query objects from search
+  search_term = request.form.get('search_term')
+  search_results = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
+  current_date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  count_of_results = len(search_results)
+  
+  # Initialize the data list and step through each result to retrieve needed data
+  data = []
+  for artist in search_results:
+    artist_id = artist.id
+    artist_name = artist.name
+    upcoming_show_count = db.session.query(Show).filter(
+                                    Show.artist_id==artist_id,
+                                    Show.start_time>=current_date_time
+                                    ).count()
+    artist_details = {
+      'id': artist_id,
+      'name': artist_name,
+      'num_upcoming_shows': upcoming_show_count
+    }
+    data.append(artist_details)
+  
+  # Build the response dictionary the view is expecting
+  response = {
+    'count': count_of_results,
+    'data': data
   }
+
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
